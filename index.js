@@ -132,12 +132,14 @@ setInterval(() => {
             "value": reward * 100000000,
             "address": user.wallet,
             "asset_id": 10,
+            "offline": true
           }
         }
           
         axios.post(walletURL, walletData, walletHeaders).then(res => {
           write_log('rewards.log', 'sending reward')
-          console.log(res)
+          console.log(res.data)
+          let txId = res.data.result.txId
         }).catch((err) => {
           write_log('rewards.log', 'error sending to ' + user.wallet, " \n " + err)
         });

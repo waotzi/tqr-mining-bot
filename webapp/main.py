@@ -84,6 +84,14 @@ class ReviewData(BaseModel):
     cards: list
     rejected: list
 
+@app.post("/transactions/{tx_id}")
+def add_transaction(tx_id: int, tx: schemas.Transactions, db: Session = Depends(get_db), authenticated: bool = Depends(auth_request)):
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated")
+    crud.add_transaction(db, tx, tx_id)
+
 @app.get("/users/{user_id}/reset_red_cards")
 def user_reset_red_cards(user_id: int, db: Session = Depends(get_db), authenticated: bool = Depends(auth_request)):
     if not authenticated:
