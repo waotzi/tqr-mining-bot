@@ -1,0 +1,317 @@
+
+const https = require('https');
+const axios = require('axios')
+const fs = require('fs');
+const { Telegraf } = require('telegraf');
+
+const walletURL = "http://127.0.0.1:10000/api/wallet"
+const walletHeaders = {
+	headers: { 
+	  "Content-Type": 'application/json',
+	}
+}
+
+require('dotenv').config();
+
+const chat_id = -1001842396281
+const serverURL = "https://usa.raskul.com"
+
+// replace the value below with the Telegram token you receive from @BotFather
+const token = process.env.TOKEN;
+const secret_api_key = process.env.SECRET_API_KEY
+
+const headers = {
+  headers: { 
+    Accept: 'application/json',
+    Authorization: 'Bearer ' + secret_api_key
+  },
+}
+
+// Create a bot that uses 'polling' to fetch new updates
+const bot = new Telegraf(token)
+
+
+const download = (url, dest, cb) => {
+  var file = fs.createWriteStream(dest);
+  https.get(url, (response) => {
+    response.pipe(file);
+    file.on('finish', function() {
+      file.close(cb);
+    });
+  });
+}
+
+
+const saveToReview = (msg_id, sender_id, sender_name, date, file_ext, chat_user_count) => {
+  const data = {
+    id: msg_id,
+    sender_id: sender_id,
+    sender_name: sender_name,
+    date: date,
+    status: 'waiting',
+    file_ext: file_ext,
+    chat_user_count: chat_user_count,
+  }
+  console.log(headers)
+  axios.post(serverURL + '/rev/' , data, headers).then(res => {
+    console.log('send to review')
+  }).catch((err) => {
+    console.log('smothing went wrong sending pic to review', err)
+  });
+
+}
+
+function convertTZ(date, tzString) {
+  return new Date((typeof date === "string" ? new Date(date) : date).toLocaleString("en-US", {timeZone: tzString}));   
+}
+
+bot.catch((err, ctx) => {
+
+  console.log(`Ooops, encountered an error for ${ctx.updateType}`, err)
+})
+
+let devReward = 0
+setInterval(() => {
+  const walletData = {
+    "jsonrpc":"2.0",
+    "id": 2,
+    "method":"tx_send",
+    "params":
+    {
+      "value": devReward * 100000000,
+      "address": process.env.DEV_WALLET,
+      "asset_id": 10,
+      "offline": true,
+    }
+  }
+    
+  axios.post(walletURL, walletData, walletHeaders).then(res => {
+    console.log('sending dev reward')
+  }).catch((err) => {
+    console.log('something went wrong sending to dev wallet', err)
+  });
+
+  
+}, 1000 * 60 * 60 * 24);
+
+setInterval(() => {
+  axios.get(serverURL + '/rev/approved', headers).then(res => {
+    res.data.forEach((rev) => {
+      axios.get(serverURL + '/rev/delete/' + rev.id, headers).then(r => {}).catch((err) => {
+        console.log('error delete thing', err)
+      })
+      axios.get(serverURL + '/users/' + rev.sender_id, headers).then(resUser => {
+        let user = resUser.data
+        let date = convertTZ(new Date(rev.date * 1000), "Pacific/Easter");
+        let mult = 1
+        if (rev.chat_user_count > 3000) mult = 1000
+        else if (rev.chat_user_count > 2000) mult = 100
+        else if (rev.chat_user_count > 1000) mult = 10
+        
+        let reward = (date.getHours() + date.getMinutes() / 100) * mult;
+        devReward += reward * 0.01
+
+        console.log(user.wallet, reward*100000000)
+
+        const walletData = {
+          "jsonrpc":"2.0",
+          "id": 2,
+          "method":"tx_send",
+          "params":
+          {
+            "value": reward * 100000000,
+            "address": user.wallet,
+            "asset_id": 10,
+          }
+        }
+          
+        axios.post(walletURL, walletData, walletHeaders).then(res => {
+          console.log('result sending to wallet', res.data)
+        }).catch((err) => {
+          console.log('something went wrong with sending tqr', err)
+        });
+
+        
+        bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment.png')}, {
+          caption: `You got the reward. Sending ${reward} TQR to your offline address.`
+          }).catch((err) => {
+          console.log('sending reward error', err)
+        });
+      }).catch((err) => {
+        console.log('err get user', err)
+      });
+    })
+  }).catch((err) => {
+    console.log('nothing to review')
+  });
+
+  axios.get(serverURL + '/rev/red_card', headers).then(res => {
+    res.data.forEach((rev) => {
+      console.log('red card', rev)
+      axios.get(serverURL + '/rev/delete/' + rev.id, headers).then(r => {}).catch((err) => {
+        console.log('error delete thing', err)
+      })
+      axios.get(serverURL + '/users/' + rev.sender_id, headers).then(resUser => {
+        let user = resUser.data
+        user.red_card += 1
+        // update db red card
+        if (user.red_card < 3) {
+          bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/redflag.png')}, {
+            caption: `You got a red flag, \\${3 - user.red_card} more consecutive red flags and you will be kicked\\.`,
+            parse_mode: "MarkdownV2"
+          }).catch((err) => {});
+        }
+        else {
+          bot.telegram.kickChatMember(chat_id, user.id).catch((err) => {});
+          // update db red card
+        }
+
+      }).catch((err) => {});
+    })
+  }).catch((err) => {});
+  
+}, 10000)
+
+// Listen for any kind of message. There are different kinds of
+// messages.
+
+bot.on('callback_query', (ctx) => {
+  let sender_id = ctx.update.callback_query.from.id
+  let user_id = ctx.update.callback_query.data
+  ctx.answerCbQuery("", { url: 't.me/tqrmining_bot?start=xxx'}).catch((err) => {});
+  if (sender_id == user_id) {
+    ctx.deleteMessage().catch((err) => {});
+  }
+})
+
+bot.on('new_chat_members', (ctx) => {
+  const msg = ctx.update.message;
+  if (msg.chat.id != chat_id) return
+
+  msg.new_chat_members.forEach( (member) => {
+    ctx.restrictChatMember(member.id, {
+      can_send_messages: false,
+      can_send_media_messages: false,
+      can_send_other_messages: false,
+    }).catch((err) => {});
+    ctx.replyWithPhoto({source: fs.readFileSync('./bot/register.png')}, {
+      caption: `Welcome [${member.first_name}](tg://user?id=${member.id})\\! To start mining please verify your account and give us your beam offline address to receive reward\\.`, 
+      parse_mode: "MarkdownV2",
+      reply_markup: {
+        inline_keyboard: [[{
+          text: 'Verify',
+          callback_data: member.id
+        }]]
+      }
+    }).catch((err) => {});
+  })
+})
+
+bot.start((ctx) => {
+  const msg = ctx.update.message;
+  if (msg.chat.id == chat_id) return
+
+  ctx.replyWithPhoto({source: fs.readFileSync('./bot/verify.png')}, {
+    caption: `Please use /update \[\offline beam adddress\]\ to start receiving rewards and to be able to mine on <a href="https://t.me/tqrtestgroup1234">TQR Mining Channel</a>`,
+    parse_mode: "HTML"
+  }).catch((err) => {});
+})
+
+bot.command('update', (ctx) => {
+  const msg = ctx.update.message;
+  if (msg.chat.id == chat_id) return
+
+  let txt = msg.text
+  txt = txt.split(' ')
+  if (txt.length == 2 && txt[1].length >= 250 && txt[1].length <= 500) {
+    console.log(msg.from)
+
+    const data = {
+      id: msg.from.id,
+      wallet: txt[1],
+      chat_id: msg.chat.id,
+      sender_name: msg.from.first_name
+    }
+    
+    axios.post(serverURL + '/users/' + msg.from.id + '/wallet' , data, headers).then((response) => {
+      if (response.status === 201) {
+        console.log('Req body:', response.data)
+        console.log('Req header :', response.headers)
+      }
+    }).catch((err) => {});
+   
+
+    ctx.replyWithPhoto({source: fs.readFileSync('./bot/address.png')}, {
+      caption: `We have saved your beam offline address, you are ready to start mining at [TQR Mining Channel](https://t.me/tqrtestgroup1234)\\. You may update your wallet address at any time here\\.`,
+      parse_mode: "MarkdownV2"
+    }).catch((err) => {});
+
+    bot.telegram.promoteChatMember(chat_id, msg.from.id, {
+      can_send_messages: true,
+      can_send_media_messages: true,
+      can_send_other_messages: true,
+    }).catch((err) => {});
+  }
+  else {
+    ctx.replyWithPhoto({source: fs.readFileSync('./bot/addresswrong.png')}, {
+      caption: 'Please make sure you have entered a vaild beam offline wallet address.'
+    }).catch((err) => {});
+  }
+})
+
+bot.on('message', (ctx) => {
+  const msg = ctx.update.message;
+  if (msg.chat.id != chat_id) return
+  let file_id = ''
+  if ('photo' in msg) {
+    file_id = msg.photo[2].file_id
+  } 
+  else if ('file' in msg) {
+    if ('file_id' in msg.file) {
+      file_id = msg.file.file_id
+    }
+    else {
+      console.log('no file id found in animation')
+    }
+  }
+  else if ('animation' in msg) {
+    if ('file_id' in msg.animation) {
+      file_id = msg.animation.file_id
+    }
+    else {
+      console.log('no file id found in animation')
+    }
+  }
+  else if ('video' in msg) {
+    if ('file_id' in msg.video) {
+      file_id = msg.video.file_id
+    }
+    else {
+      console.log('no file id found in video')
+    }
+  }
+  if (file_id) {
+    ctx.telegram.getFile(file_id).then((file_info) => {
+      const file_path = file_info.file_path
+      const url = "https://api.telegram.org/file/bot" + token + "/" + file_path;
+      if (!fs.existsSync('review')) fs.mkdirSync('review')
+
+      let file_name = file_path.split('/')
+      file_name = file_name[file_name.length - 1]
+      let file_ext = file_name.split('.')
+      file_ext = file_ext[file_ext.length - 1]
+      download(url, 'review/' + msg.message_id + '.' + file_ext)
+      ctx.getChatMembersCount().then(chat_user_count => {
+        saveToReview(msg.message_id, msg.from.id, msg.from.first_name, msg.date, file_ext, chat_user_count)
+      }).catch((err) => {});
+    }).catch((err) => {});
+  }
+  else {
+    console.log('no file id')
+  }
+
+});
+
+
+
+bot.launch()

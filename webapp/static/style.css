@@ -1,0 +1,107 @@
+body {
+    background-color: black;
+    color: white;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.flex {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.flex .item-container {
+    padding: 0.5rem;
+    margin: 1rem;
+    cursor: pointer;
+    width: 300px;
+    height: 350px;
+
+}
+.flex .item-container .item {
+    overflow: hidden;
+    width: 300px;
+    height: 240px;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #103;
+    padding: 0 1rem;
+    z-index: 9999;
+}
+.menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem;
+}
+
+.menu button {
+    width: 120px;
+    height: 32px;
+    margin: 1rem;
+
+}
+button, input[type="submit"], input[type="reset"] {
+	background: none;
+	color: inherit;
+	border: none;
+	padding: 0;
+	font: inherit;
+	cursor: pointer;
+	outline: inherit;
+}
+button {
+    background-color: purple;
+    color: white;
+    padding: 0.2rem 1rem;
+}
+main {
+    padding: 2rem;
+    margin-top: 5rem;
+}
+
+
+.justify-center {
+    justify-content: center;
+}
+
+.space-around {
+    justify-content: space-around;
+}
+
+input[type=radio] {
+    border: 0px;
+    width: 2rem;
+    height: 2rem;
+}
+
+.center {
+    text-align: center;
+}
+
+.light-red {
+    background-color: #600;
+    border-radius: 5%;
+}
+.red {
+    background-color: #400;
+    border-radius: 5%;
+}
+.blue {
+    background-color: #004;
+    border-radius: 5%;
+}
+
+.selected {
+    background-color: #040;
+    border-radius: 5%;
+}

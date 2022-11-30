@@ -1,0 +1,7 @@
+review/
+node_modules/
+.env
+*.db
+__pycache__/
+*.kate-swp
+wallet/
