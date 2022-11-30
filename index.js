@@ -132,6 +132,7 @@ setInterval(() => {
             "value": reward * 100000000,
             "address": user.wallet,
             "asset_id": 10,
+            "fee": 1100000,
             "offline": true
           }
         }
