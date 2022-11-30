@@ -138,7 +138,7 @@ setInterval(() => {
         axios.post(walletURL, walletData, walletHeaders).then(res => {
           write_log('rewards.log', 'sending reward')
         }).catch((err) => {
-          write_log('rewards.log', 'error: ' + err)
+          write_log('rewards.log', 'error sending to ' + user.wallet, " \n axios error: " + err)
         });
 
         
