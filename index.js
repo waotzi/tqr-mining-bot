@@ -129,7 +129,7 @@ setInterval(() => {
           "method":"tx_send",
           "params":
           {
-            "value": reward,
+            "value": 12,
             "address": user.wallet,
             "asset_id": 10,
             "offline": true
