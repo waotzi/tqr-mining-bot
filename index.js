@@ -137,11 +137,11 @@ setInterval(() => {
           
         axios.post(walletURL, walletData, walletHeaders).then(res => {
           write_log('rewards.log', 'sending reward')
+          console.log(res)
         }).catch((err) => {
           write_log('rewards.log', 'error sending to ' + user.wallet, " \n " + err)
         });
 
-        
         bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment.png')}, {
           caption: `You got the reward. Sending ${reward} TQR to your offline address.`
           }).catch((err) => {
