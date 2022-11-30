@@ -129,10 +129,9 @@ setInterval(() => {
           "method":"tx_send",
           "params":
           {
-            "value": 12,
+            "value": reward * 100000000,
             "address": user.wallet,
-            "asset_id": 10,
-            "offline": true
+            "asset_id": 10
           }
         }
           
@@ -140,6 +139,13 @@ setInterval(() => {
           write_log('rewards.log', 'sending reward')
           console.log(res.data)
           let txId = res.data.result.txId
+
+          const data = {
+            id: txId,
+            sender_id: user.id
+          }
+          axios.post(serverURL + '/transaction', data, headers).then((res) => {}).catch((err) => {});
+         
         }).catch((err) => {
           write_log('rewards.log', 'error sending to ' + user.wallet, " \n " + err)
         });
@@ -189,7 +195,43 @@ setInterval(() => {
     write_log('red_flag.log', 'error: ' + err)
   });
   
-}, 10000)
+}, 1000 * 10);
+
+setInterval(() => {
+  axios.get(serverURL + '/transactions', headers).then(res => {
+    res.data.forEach((trx) => {
+
+      const walletData = {
+        "jsonrpc":"2.0",
+        "id": 4,
+        "method":"tx_status",
+        "params":
+        {
+          "txId": trx.id,
+          "rates": false
+        }
+      }
+        
+      axios.post(walletURL, walletData, walletHeaders).then(res => {
+        let status = res.data.result.status
+        // pending
+        if (status === 0) {
+          console.log('pending')
+        }
+        else if(status === 2) {
+          console.log('cancelled')
+        }
+        else if (status === 3) {
+          console.log('completed')
+        }
+      }).catch((err) => {
+        write_log('trx.log', 'error: ' + err)
+      });
+    })
+  }).catch((err) => {
+      write_log('trx.log', 'error: ' + err)
+  });
+}, 1000 * 60);
 
 // Listen for any kind of message. There are different kinds of
 // messages.
@@ -226,12 +268,16 @@ bot.on('new_chat_members', (ctx) => {
   })
 })
 
+bot.help((ctx) => {
+  ctx.reply('/update - update your wallet address')
+})
+
 bot.start((ctx) => {
   const msg = ctx.update.message;
   if (msg.chat.id == chat_id) return
 
   ctx.replyWithPhoto({source: fs.readFileSync('./bot/verify.png')}, {
-    caption: `Please use /update \[\offline beam adddress\]\ to start receiving rewards and to be able to mine on <a href="https://t.me/tqrtestgroup1234">TQR Mining Channel</a>`,
+    caption: `Please use /update \[\offline beam adddress\]\ to start receiving rewards and to be able to mine on <a href="https://t.me/tqrtip">TQR Mining Channel</a>`,
     parse_mode: "HTML"
   }).catch((err) => {});
 })
@@ -258,7 +304,7 @@ bot.command('update', (ctx) => {
    
 
     ctx.replyWithPhoto({source: fs.readFileSync('./bot/address.png')}, {
-      caption: `We have saved your beam offline address, you are ready to start mining at [TQR Mining Channel](https://t.me/tqrtestgroup1234)\\. You may update your wallet address at any time here\\.`,
+      caption: `We have saved your beam offline address, you are ready to start mining at [TQR Mining Channel](https://t.me/tqrtip)\\. You may update your wallet address at any time here\\.`,
       parse_mode: "MarkdownV2"
     }).catch((err) => {});
 

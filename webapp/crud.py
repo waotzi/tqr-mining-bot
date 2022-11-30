@@ -37,6 +37,17 @@ def update_user_wallet(db:Session, user: schemas.UserWallet, user_id: int):
     else:
         return create_user(db, user)
 
+def add_transaction(db:Session, tx: schemas.Transactions):
+    db_tx = models.Transactions(id = tx.id, sender_id = tx.sender_id)
+    db.add(db_tx)
+    db.commit()
+    db.refresh(db_tx)
+    return db_tx
+
+def get_transactions(db:Session):
+    db_trx = db.query(models.Transactions).all()
+    return db_trx
+
 def get_review(db:Session, status: str):
     db_review = db.query(models.Review).filter(models.Review.status == status).all()
     return db_review
