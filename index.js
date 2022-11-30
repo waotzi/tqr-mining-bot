@@ -138,20 +138,21 @@ setInterval(() => {
         axios.post(walletURL, walletData, walletHeaders).then(res => {
           write_log('rewards.log', 'sending reward')
         }).catch((err) => {
-          write_log('rewards.log', 'error sending to ' + user.wallet, " \n axios error: " + err)
+          write_log('rewards.log', 'error sending to ' + user.wallet, " \n " + err)
         });
 
         
         bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment.png')}, {
           caption: `You got the reward. Sending ${reward} TQR to your offline address.`
           }).catch((err) => {
-            write_log('rewards.log', 'error: ' + err)
+            write_log('rewards.log', 'error sending bot message: ' + err)
           });
       }).catch((err) => {
-        write_log('rewards.log', 'error: ' + err)
+        write_log('rewards.log', 'error getting user: ' + err)
       });
     })
   }).catch((err) => {
+    write_log('rewards.log', 'error getting approved users: ' + err)
   });
 
   axios.get(serverURL + '/rev/red_card', headers).then(res => {
@@ -173,7 +174,9 @@ setInterval(() => {
         }
         else {
           bot.telegram.kickChatMember(chat_id, user.id).catch((err) => {});
-          // update db red card
+          axios.get(serverURL + '/users/' + user.id + 'reset_red_cards', headers).then(r => {}).catch((err) => {
+            write_log('red_flag.log', 'error: ' + err)
+          })
         }
 
       }).catch((err) => {
