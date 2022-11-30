@@ -30,6 +30,13 @@ const headers = {
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new Telegraf(token)
 
+const write_log = (file_name, data) => {
+  fs.mkdirSync('log', { recursive: true });
+
+  fs.appendFile('log/' + file_name, data + '\n', (err) => {
+    if (err) throw err;
+  })
+}
 
 const download = (url, dest, cb) => {
   var file = fs.createWriteStream(dest);
@@ -52,11 +59,11 @@ const saveToReview = (msg_id, sender_id, sender_name, date, file_ext, chat_user_
     file_ext: file_ext,
     chat_user_count: chat_user_count,
   }
-  console.log(headers)
+
   axios.post(serverURL + '/rev/' , data, headers).then(res => {
-    console.log('send to review')
+    write_log('send_review.log', 'send to review')
   }).catch((err) => {
-    console.log('smothing went wrong sending pic to review', err)
+    write_log('send_review.log', 'error: ', err)
   });
 
 }
@@ -81,24 +88,26 @@ setInterval(() => {
       "value": devReward * 100000000,
       "address": process.env.DEV_WALLET,
       "asset_id": 10,
-      "offline": true,
     }
   }
     
   axios.post(walletURL, walletData, walletHeaders).then(res => {
-    console.log('sending dev reward')
+    write_log('dev_reward.log', 'sending dev reward')
   }).catch((err) => {
-    console.log('something went wrong sending to dev wallet', err)
+    write_log('dev_reward.log', 'error: ', err)
   });
 
   
 }, 1000 * 60 * 60 * 24);
+setInterval(() => {
+  fs.rmSync('log', { recursive: true, force: true });
+}, 1000 * 60 * 60 * 6);
 
 setInterval(() => {
   axios.get(serverURL + '/rev/approved', headers).then(res => {
     res.data.forEach((rev) => {
       axios.get(serverURL + '/rev/delete/' + rev.id, headers).then(r => {}).catch((err) => {
-        console.log('error delete thing', err)
+        write_log('delete.log', 'error: ', err)
       })
       axios.get(serverURL + '/users/' + rev.sender_id, headers).then(resUser => {
         let user = resUser.data
@@ -110,8 +119,6 @@ setInterval(() => {
         
         let reward = (date.getHours() + date.getMinutes() / 100) * mult;
         devReward += reward * 0.01
-
-        console.log(user.wallet, reward*100000000)
 
         const walletData = {
           "jsonrpc":"2.0",
@@ -126,30 +133,28 @@ setInterval(() => {
         }
           
         axios.post(walletURL, walletData, walletHeaders).then(res => {
-          console.log('result sending to wallet', res.data)
+          write_log('rewards.log', 'sending reward')
         }).catch((err) => {
-          console.log('something went wrong with sending tqr', err)
+          write_log('rewards.log', 'error: ', err)
         });
 
         
         bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment.png')}, {
           caption: `You got the reward. Sending ${reward} TQR to your offline address.`
           }).catch((err) => {
-          console.log('sending reward error', err)
-        });
+            write_log('rewards.log', 'error: ', err)
+          });
       }).catch((err) => {
-        console.log('err get user', err)
+        write_log('rewards.log', 'error: ', err)
       });
     })
   }).catch((err) => {
-    console.log('nothing to review')
   });
 
   axios.get(serverURL + '/rev/red_card', headers).then(res => {
     res.data.forEach((rev) => {
-      console.log('red card', rev)
       axios.get(serverURL + '/rev/delete/' + rev.id, headers).then(r => {}).catch((err) => {
-        console.log('error delete thing', err)
+        write_log('delete.log', 'error: ', err)
       })
       axios.get(serverURL + '/users/' + rev.sender_id, headers).then(resUser => {
         let user = resUser.data
@@ -159,16 +164,22 @@ setInterval(() => {
           bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/redflag.png')}, {
             caption: `You got a red flag, \\${3 - user.red_card} more consecutive red flags and you will be kicked\\.`,
             parse_mode: "MarkdownV2"
-          }).catch((err) => {});
+          }).catch((err) => {
+            write_log('red_flag.log', 'error: ', err)
+          });
         }
         else {
           bot.telegram.kickChatMember(chat_id, user.id).catch((err) => {});
           // update db red card
         }
 
-      }).catch((err) => {});
+      }).catch((err) => {
+        write_log('red_flag.log', 'error: ', err)
+      });
     })
-  }).catch((err) => {});
+  }).catch((err) => {
+    write_log('red_flag.log', 'error: ', err)
+  });
   
 }, 10000)
 
@@ -224,8 +235,6 @@ bot.command('update', (ctx) => {
   let txt = msg.text
   txt = txt.split(' ')
   if (txt.length == 2 && txt[1].length >= 250 && txt[1].length <= 500) {
-    console.log(msg.from)
-
     const data = {
       id: msg.from.id,
       wallet: txt[1],
@@ -235,8 +244,7 @@ bot.command('update', (ctx) => {
     
     axios.post(serverURL + '/users/' + msg.from.id + '/wallet' , data, headers).then((response) => {
       if (response.status === 201) {
-        console.log('Req body:', response.data)
-        console.log('Req header :', response.headers)
+
       }
     }).catch((err) => {});
    
@@ -270,24 +278,15 @@ bot.on('message', (ctx) => {
     if ('file_id' in msg.file) {
       file_id = msg.file.file_id
     }
-    else {
-      console.log('no file id found in animation')
-    }
   }
   else if ('animation' in msg) {
     if ('file_id' in msg.animation) {
       file_id = msg.animation.file_id
     }
-    else {
-      console.log('no file id found in animation')
-    }
   }
   else if ('video' in msg) {
     if ('file_id' in msg.video) {
       file_id = msg.video.file_id
-    }
-    else {
-      console.log('no file id found in video')
     }
   }
   if (file_id) {
@@ -305,9 +304,6 @@ bot.on('message', (ctx) => {
         saveToReview(msg.message_id, msg.from.id, msg.from.first_name, msg.date, file_ext, chat_user_count)
       }).catch((err) => {});
     }).catch((err) => {});
-  }
-  else {
-    console.log('no file id')
   }
 
 });
