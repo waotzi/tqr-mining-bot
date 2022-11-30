@@ -63,7 +63,7 @@ const saveToReview = (msg_id, sender_id, sender_name, date, file_ext, chat_user_
   axios.post(serverURL + '/rev/' , data, headers).then(res => {
     write_log('send_review.log', 'send to review')
   }).catch((err) => {
-    write_log('send_review.log', 'error: ', err)
+    write_log('send_review.log', 'error: ' + err)
   });
 
 }
@@ -73,8 +73,7 @@ function convertTZ(date, tzString) {
 }
 
 bot.catch((err, ctx) => {
-
-  console.log(`Ooops, encountered an error for ${ctx.updateType}`, err)
+  write_log('bot.log', `error: ${ctx.updateType}` + err)
 })
 
 
@@ -96,7 +95,7 @@ setInterval(() => {
   axios.post(walletURL, walletData, walletHeaders).then(res => {
     write_log('dev_reward.log', 'sending dev reward')
   }).catch((err) => {
-    write_log('dev_reward.log', 'error: ', err)
+    write_log('dev_reward.log', 'error: ' + err)
   });
 
   
@@ -111,7 +110,7 @@ setInterval(() => {
   axios.get(serverURL + '/rev/approved', headers).then(res => {
     res.data.forEach((rev) => {
       axios.get(serverURL + '/rev/delete/' + rev.id, headers).then(r => {}).catch((err) => {
-        write_log('delete.log', 'error: ', err)
+        write_log('delete.log', 'error: ' + err)
       })
       axios.get(serverURL + '/users/' + rev.sender_id, headers).then(resUser => {
         let user = resUser.data
@@ -139,17 +138,17 @@ setInterval(() => {
         axios.post(walletURL, walletData, walletHeaders).then(res => {
           write_log('rewards.log', 'sending reward')
         }).catch((err) => {
-          write_log('rewards.log', 'error: ', err)
+          write_log('rewards.log', 'error: ' + err)
         });
 
         
         bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment.png')}, {
           caption: `You got the reward. Sending ${reward} TQR to your offline address.`
           }).catch((err) => {
-            write_log('rewards.log', 'error: ', err)
+            write_log('rewards.log', 'error: ' + err)
           });
       }).catch((err) => {
-        write_log('rewards.log', 'error: ', err)
+        write_log('rewards.log', 'error: ' + err)
       });
     })
   }).catch((err) => {
@@ -158,7 +157,7 @@ setInterval(() => {
   axios.get(serverURL + '/rev/red_card', headers).then(res => {
     res.data.forEach((rev) => {
       axios.get(serverURL + '/rev/delete/' + rev.id, headers).then(r => {}).catch((err) => {
-        write_log('delete.log', 'error: ', err)
+        write_log('delete.log', 'error: ' + err)
       })
       axios.get(serverURL + '/users/' + rev.sender_id, headers).then(resUser => {
         let user = resUser.data
@@ -169,7 +168,7 @@ setInterval(() => {
             caption: `You got a red flag, \\${3 - user.red_card} more consecutive red flags and you will be kicked\\.`,
             parse_mode: "MarkdownV2"
           }).catch((err) => {
-            write_log('red_flag.log', 'error: ', err)
+            write_log('red_flag.log', 'error: ' + err)
           });
         }
         else {
@@ -178,11 +177,11 @@ setInterval(() => {
         }
 
       }).catch((err) => {
-        write_log('red_flag.log', 'error: ', err)
+        write_log('red_flag.log', 'error: ' + err)
       });
     })
   }).catch((err) => {
-    write_log('red_flag.log', 'error: ', err)
+    write_log('red_flag.log', 'error: ' + err)
   });
   
 }, 10000)
