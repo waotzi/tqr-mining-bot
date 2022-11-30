@@ -77,6 +77,8 @@ bot.catch((err, ctx) => {
   console.log(`Ooops, encountered an error for ${ctx.updateType}`, err)
 })
 
+
+// give out devReward every 6 hours
 let devReward = 0
 setInterval(() => {
   const walletData = {
@@ -98,10 +100,12 @@ setInterval(() => {
   });
 
   
-}, 1000 * 60 * 60 * 24);
+}, 1000 * 60 * 60 * 6);
+
+// remove logs every 12 hours
 setInterval(() => {
   fs.rmSync('log', { recursive: true, force: true });
-}, 1000 * 60 * 60 * 6);
+}, 1000 * 60 * 60 * 12);
 
 setInterval(() => {
   axios.get(serverURL + '/rev/approved', headers).then(res => {
