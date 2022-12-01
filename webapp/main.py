@@ -7,6 +7,9 @@ from datetime import datetime
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import os
+from operator import attrgetter
+
+import bisect
 import webapp.crud as crud
 import webapp.models as models
 import webapp.schemas as schemas
@@ -194,7 +197,7 @@ async def root(db: Session = Depends(get_db)):
         date = item.date - item.date % 60
 
         if date in dates:
-            dates[date].append(item)
+            bisect.insort(dates[date], item, key=attrgetter('date'))
         else:
             dates[date] = [item]
     
@@ -204,13 +207,16 @@ async def root(db: Session = Depends(get_db)):
         html += "<button onClick='window.location.reload();'>Refresh</button>"
         html += "</center>"
     for date, row  in dates.items():
-        dt = datetime.fromtimestamp(item.date)
-
+        dt = datetime.fromtimestamp(date)
         time = dt.time().strftime('%H:%M')
 
         html += "<h1>" + format(time) + "</h1>"
         html += "<div class='group flex'>"
+
+        row2 = enumerate(row)
+        print(row2)
         for i, item in enumerate(row):
+            print(item.date)
             html += "<div id='" + str(item.id) + "' class='item-container'>"
             html += "<h2 class='center'>" + str(i + 1) + "</h2>"
             html += "<div class='flex space-around'>"

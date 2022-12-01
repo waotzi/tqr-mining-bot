@@ -65,6 +65,12 @@ const saveToReview = (msg_id, sender_id, sender_name, date, file_ext, chat_user_
   }
 
   axios.post(serverURL + '/rev/' , data, headers).then(res => {
+   /* bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment.png')}, {
+      caption: 'Flag has been send for review.'
+    }).catch((err) => {
+        write_log('send_rewards.log', 'error sending bot message: ' + err)
+    });*/
+
     write_log('send_review.log', 'send to review from ' +sender_id)
   }).catch((err) => {
     write_log('send_review.log', 'error: ' + err)
@@ -351,7 +357,8 @@ bot.on('message', (ctx) => {
       restrictMember(ctx, msg.from)
       ctx.deleteMessage().catch((err) => {});
     }
-    write_log('error_no_file.log', msg)
+    write_log('error_no_file.log', err)
+    console.log('error no file', err)
 
   });
   
