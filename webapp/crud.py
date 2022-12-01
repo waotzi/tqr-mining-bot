@@ -48,6 +48,11 @@ def get_transactions(db:Session):
     db_trx = db.query(models.Transactions).all()
     return db_trx
 
+
+def delete_trx(db: Session, id: int):
+    db.query(models.Review).filter(models.Transactions.id == id).delete()
+    db.commit()
+
 def get_review(db:Session, status: str):
     db_review = db.query(models.Review).filter(models.Review.status == status).all()
     return db_review

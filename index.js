@@ -149,9 +149,9 @@ setInterval(() => {
             sender_id: user.id
           }
           axios.post(serverURL + '/transaction', data, headers).then((res) => {
-            console.log('add trx ', res)
+            write_log('trx.log', 'add transaction')
           }).catch((err) => {
-            console.log('err add trx', err)
+            write_log('trx.log', 'err add trx' + err)
           });
          
         }).catch((err) => {
@@ -221,16 +221,36 @@ setInterval(() => {
         
       axios.post(walletURL, walletData, walletHeaders).then(res => {
         let status = res.data.result.status
-        // pending
-        if (status === 0) {
-          console.log('pending')
-        }
-        else if(status === 2) {
-          console.log('cancelled')
-        }
-        else if (status === 3) {
-          console.log('completed')
-        }
+        axios.get(serverURL + '/users/' + trx.sender_id, headers).then(resUser => {
+          let user = resUser.data
+          // pending
+          if (status === 0) {
+          //  console.log('pending')
+          }
+          else if(status === 2) {
+            axios.get(serverURL + '/rev/delete/' + trx.id, headers).then(r => {}).catch((err) => {
+              write_log('delete.log', 'error: ' + err)
+            })
+            bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment_failed.png')}, {
+              caption: 'Payment failed'
+              }).catch((err) => {
+                write_log('trx.log', 'error sending bot message: ' + err)
+            });
+          }
+          else if (status === 3) {
+            axios.get(serverURL + '/rev/delete/' + trx.id, headers).then(r => {}).catch((err) => {
+              write_log('delete.log', 'error: ' + err)
+            })
+            bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment_success.png')}, {
+              caption: 'Payment successful'
+              }).catch((err) => {
+                write_log('trx.log', 'error sending bot message: ' + err)
+            });
+          }
+        }).catch((err) => {
+          write_log('trx.log', 'error get user: ' + err)
+        });
+       
       }).catch((err) => {
         write_log('trx.log', 'error: ' + err)
       });

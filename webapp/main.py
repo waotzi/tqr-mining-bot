@@ -92,6 +92,14 @@ def add_transaction(tx: schemas.Transactions, db: Session = Depends(get_db), aut
             detail="Not authenticated")
     return crud.add_transaction(db = db, tx = tx)
 
+@app.get("/trx/delete/{id}")
+def delete_review(id: int, db: Session = Depends(get_db), authenticated: bool = Depends(auth_request)):
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated")
+    crud.delete_trx(db, id)
+
 @app.get("/transactions/", response_model=list[schemas.Transactions])
 def read_review(db: Session = Depends(get_db), authenticated: bool = Depends(auth_request)):
     if not authenticated:
