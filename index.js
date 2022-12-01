@@ -204,7 +204,7 @@ setInterval(() => {
 setInterval(() => {
   axios.get(serverURL + '/transactions', headers).then(res => {
     res.data.forEach((trx) => {
-
+      console.log('trx', trx)
       const walletData = {
         "jsonrpc":"2.0",
         "id": 4,
@@ -233,7 +233,7 @@ setInterval(() => {
       });
     })
   }).catch((err) => {
-      write_log('trx.log', 'error: ' + err)
+      write_log('trx.log', 'get transactions error: ' + err)
   });
 }, 1000 * 10);
 
