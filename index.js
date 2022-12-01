@@ -305,7 +305,7 @@ bot.command('update', (ctx) => {
 bot.on('message', (ctx) => {
   const msg = ctx.update.message;
   if (msg.chat.id != chat_id) return
-
+  console.log(msg)
   axios.get(serverURL + '/users/' + msg.from.id, headers).then(res => {
 
     let file_id = ''
