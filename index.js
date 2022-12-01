@@ -156,6 +156,12 @@ setInterval(() => {
           });*/
          
         }).catch((err) => {
+          bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/addresswrong.png')}, {
+            caption: 'Something went wrong when trying to send your reward. Please make sure to use a regular offline address.',
+          }).catch((err) => {
+            write_log('rewards.log', 'error sending bot message about wrong wallet address: ' + err)
+          });
+
           write_log('rewards.log', 'error sending to ' + user.wallet, " \n " + err)
         });
 
