@@ -213,10 +213,7 @@ async def root(db: Session = Depends(get_db)):
         html += "<h1>" + format(time) + "</h1>"
         html += "<div class='group flex'>"
 
-        row2 = enumerate(row)
-        print(row2)
         for i, item in enumerate(row):
-            print(item.date)
             html += "<div id='" + str(item.id) + "' class='item-container'>"
             html += "<h2 class='center'>" + str(i + 1) + "</h2>"
             html += "<div class='flex space-around'>"
