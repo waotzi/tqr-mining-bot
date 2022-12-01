@@ -204,7 +204,8 @@ async def root(db: Session = Depends(get_db)):
         html += "<button onClick='window.location.reload();'>Refresh</button>"
         html += "</center>"
     for date, row  in dates.items():
-        dt = datetime.fromtimestamp(date)
+        dt = datetime.fromtimestamp(item.date)
+
         time = dt.time().strftime('%H:%M')
 
         html += "<h1>" + format(time) + "</h1>"

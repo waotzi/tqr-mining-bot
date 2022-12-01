@@ -335,7 +335,7 @@ bot.on('message', (ctx) => {
         ctx.getChatMembersCount().then(chat_user_count => {
           saveToReview(msg.message_id, msg.from.id, msg.from.first_name, msg.date, file_ext, chat_user_count)
         }).catch((err) => {
-          write_log('review_file.log', 'eroror getting chat members: ' + err)
+          write_log('review_file.log', 'error getting chat members: ' + err)
         });
       }).catch((err) => {
         write_log('review_file.log', 'error getting file: ' + err)
@@ -351,6 +351,8 @@ bot.on('message', (ctx) => {
       restrictMember(ctx, msg.from)
       ctx.deleteMessage().catch((err) => {});
     }
+    write_log('error_no_file.log', msg)
+
   });
   
 
