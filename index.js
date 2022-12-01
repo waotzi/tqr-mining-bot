@@ -349,20 +349,20 @@ bot.on('message', (ctx) => {
     }
     else {
       write_log('review_file.log', 'no file_id' + msg.from)
-      print('no file id', msg)
+      console.log('no file id', msg)
     
     }
   }).catch((err) => {
-    if ("data" in err.response) {
+    if ('response' in err) {
       if (err.response.data.detail == "User not found") {
         restrictMember(ctx, msg.from)
         ctx.deleteMessage().catch((err) => {
-          
+
         });
       }
-    } else write_log('review_file.log', 'no data in err response')
+    } 
     write_log('error_no_file.log', err)
-    print('error file no ', err)
+    console.log('error file no ', err)
   });
   
 
