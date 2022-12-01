@@ -145,7 +145,7 @@ setInterval(() => {
           let txId = res.data.result.txId
 
           const data = {
-            id: txId,
+            id: parseInt(txId),
             sender_id: user.id
           }
           axios.post(serverURL + '/transaction', data, headers).then((res) => {
