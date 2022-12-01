@@ -13,7 +13,11 @@ const walletHeaders = {
 
 require('dotenv').config();
 
+// test group
 const chat_id = -1001842396281
+// main group
+//const chat_id = -1001889632351
+
 const serverURL = "https://usa.raskul.com"
 
 // replace the value below with the Telegram token you receive from @BotFather
@@ -241,7 +245,9 @@ bot.on('callback_query', (ctx) => {
   let user_id = ctx.update.callback_query.data
   ctx.answerCbQuery("", { url: 't.me/tqrmining_bot?start=xxx'}).catch((err) => {});
   if (sender_id == user_id) {
-    ctx.deleteMessage().catch((err) => {});
+    setTimeout(() => {
+      ctx.deleteMessage().catch((err) => {});
+    }, 1000)
   }
 })
 
@@ -250,27 +256,31 @@ bot.on('new_chat_members', (ctx) => {
   if (msg.chat.id != chat_id) return
 
   msg.new_chat_members.forEach( (member) => {
-    ctx.restrictChatMember(member.id, {
-      can_send_messages: false,
-      can_send_media_messages: false,
-      can_send_other_messages: false,
-    }).catch((err) => {});
-    ctx.replyWithPhoto({source: fs.readFileSync('./bot/register.png')}, {
-      caption: `Welcome [${member.first_name}](tg://user?id=${member.id})\\! To start mining please verify your account and give us your beam offline address to receive reward\\.`, 
-      parse_mode: "MarkdownV2",
-      reply_markup: {
-        inline_keyboard: [[{
-          text: 'Verify',
-          callback_data: member.id
-        }]]
-      }
-    }).catch((err) => {});
+    restrictMember(ctx, member)
   })
 })
 
 bot.help((ctx) => {
   ctx.reply('/update - update your wallet address')
 })
+
+const restrictMember = (ctx, member) => {
+  ctx.restrictChatMember(member.id, {
+    can_send_messages: false,
+    can_send_media_messages: false,
+    can_send_other_messages: false,
+  }).catch((err) => {});
+  ctx.replyWithPhoto({source: fs.readFileSync('./bot/register.png')}, {
+    caption: `Welcome [${member.first_name}](tg://user?id=${member.id})\\! To start mining please verify your account and give us your beam offline address to receive reward\\.`, 
+    parse_mode: "MarkdownV2",
+    reply_markup: {
+      inline_keyboard: [[{
+        text: 'Verify',
+        callback_data: member.id
+      }]]
+    }
+  }).catch((err) => {});
+}
 
 bot.start((ctx) => {
   const msg = ctx.update.message;
@@ -324,41 +334,51 @@ bot.command('update', (ctx) => {
 bot.on('message', (ctx) => {
   const msg = ctx.update.message;
   if (msg.chat.id != chat_id) return
-  let file_id = ''
-  if ('photo' in msg) {
-    file_id = msg.photo[2].file_id
-  } 
-  else if ('file' in msg) {
-    if ('file_id' in msg.file) {
-      file_id = msg.file.file_id
-    }
-  }
-  else if ('animation' in msg) {
-    if ('file_id' in msg.animation) {
-      file_id = msg.animation.file_id
-    }
-  }
-  else if ('video' in msg) {
-    if ('file_id' in msg.video) {
-      file_id = msg.video.file_id
-    }
-  }
-  if (file_id) {
-    ctx.telegram.getFile(file_id).then((file_info) => {
-      const file_path = file_info.file_path
-      const url = "https://api.telegram.org/file/bot" + token + "/" + file_path;
-      if (!fs.existsSync('review')) fs.mkdirSync('review')
 
-      let file_name = file_path.split('/')
-      file_name = file_name[file_name.length - 1]
-      let file_ext = file_name.split('.')
-      file_ext = file_ext[file_ext.length - 1]
-      download(url, 'review/' + msg.message_id + '.' + file_ext)
-      ctx.getChatMembersCount().then(chat_user_count => {
-        saveToReview(msg.message_id, msg.from.id, msg.from.first_name, msg.date, file_ext, chat_user_count)
+  axios.get(serverURL + '/users/' + msg.from.id, headers).then(res => {
+
+    let file_id = ''
+    if ('photo' in msg) {
+      file_id = msg.photo[2].file_id
+    } 
+    else if ('file' in msg) {
+      if ('file_id' in msg.file) {
+        file_id = msg.file.file_id
+      }
+    }
+    else if ('animation' in msg) {
+      if ('file_id' in msg.animation) {
+        file_id = msg.animation.file_id
+      }
+    }
+    else if ('video' in msg) {
+      if ('file_id' in msg.video) {
+        file_id = msg.video.file_id
+      }
+    }
+    if (file_id) {
+      ctx.telegram.getFile(file_id).then((file_info) => {
+        const file_path = file_info.file_path
+        const url = "https://api.telegram.org/file/bot" + token + "/" + file_path;
+        if (!fs.existsSync('review')) fs.mkdirSync('review')
+  
+        let file_name = file_path.split('/')
+        file_name = file_name[file_name.length - 1]
+        let file_ext = file_name.split('.')
+        file_ext = file_ext[file_ext.length - 1]
+        download(url, 'review/' + msg.message_id + '.' + file_ext)
+        ctx.getChatMembersCount().then(chat_user_count => {
+          saveToReview(msg.message_id, msg.from.id, msg.from.first_name, msg.date, file_ext, chat_user_count)
+        }).catch((err) => {});
       }).catch((err) => {});
-    }).catch((err) => {});
-  }
+    }
+  }).catch((err) => {
+    if (err.response.data.detail == "User not found") {
+      restrictMember(ctx, msg.from)
+      ctx.deleteMessage().catch((err) => {});
+    }
+  });
+  
 
 });
 
