@@ -310,7 +310,7 @@ bot.on('message', (ctx) => {
 
     let file_id = ''
     if ('photo' in msg) {
-      file_id = msg.photo[2].file_id
+      file_id = msg.photo[0].file_id
     } 
     else if ('file' in msg) {
       if ('file_id' in msg.file) {
@@ -348,9 +348,7 @@ bot.on('message', (ctx) => {
       });
     }
     else {
-      write_log('review_file.log', 'no file_id' + msg.from)
-      console.log('no file id', msg)
-    
+      write_log('review_file.log', 'no file_id' + msg.from)    
     }
   }).catch((err) => {
     if ('response' in err) {
@@ -362,7 +360,6 @@ bot.on('message', (ctx) => {
       }
     } 
     write_log('error_no_file.log', err)
-    console.log('error file no ', err)
   });
   
 
