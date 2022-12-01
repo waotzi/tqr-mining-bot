@@ -176,14 +176,16 @@ async def review_data(data: ReviewData, db: Session = Depends(get_db), authentic
             detail="Not authenticated")
     for id in data.selected:
         item = crud.set_item_status(db, id, "approved")
-        crud.reset_red_cards(db, item.sender_id)
+        if item is not None:
+            crud.reset_red_cards(db, item.sender_id)
         
     for id in data.rejected:
         item = crud.get_item(db, id)    
         if item is not None:
             file_path = review_path + "/" + str(item.id) + "." + item.file_ext
             os.remove(file_path)
-            crud.reset_red_cards(db, item.sender_id)
+            if item is not None:
+                crud.reset_red_cards(db, item.sender_id)
             crud.delete_item(db, id)
     for id in data.cards:
         item = crud.set_item_status(db, id, "red_card")   
