@@ -148,7 +148,11 @@ setInterval(() => {
             id: txId,
             sender_id: user.id
           }
-          axios.post(serverURL + '/transaction', data, headers).then((res) => {}).catch((err) => {});
+          axios.post(serverURL + '/transaction', data, headers).then((res) => {
+            console.log('add trx ', res)
+          }).catch((err) => {
+            console.log('err add trx', err)
+          });
          
         }).catch((err) => {
           write_log('rewards.log', 'error sending to ' + user.wallet, " \n " + err)
