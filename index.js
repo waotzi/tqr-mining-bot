@@ -166,7 +166,7 @@ setInterval(() => {
         });
 
         bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment.png')}, {
-          caption: `Sending ${reward} TQR to your wallet\\, please open it\\!`
+          caption: `Sending ${reward} TQR to your wallet, please open it!`
           }).catch((err) => {
             write_log('rewards.log', 'error sending bot message: ' + err)
           });
