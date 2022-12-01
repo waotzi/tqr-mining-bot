@@ -99,6 +99,7 @@ def read_review(db: Session = Depends(get_db), authenticated: bool = Depends(aut
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated")
     db_trx = crud.get_transactions(db)
+    print(db_trx)
     if not db_trx:
         raise HTTPException(status_code=404, detail="No transactions found")
     return db_trx
