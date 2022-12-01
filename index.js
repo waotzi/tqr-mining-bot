@@ -231,7 +231,7 @@ setInterval(() => {
   }).catch((err) => {
       write_log('trx.log', 'error: ' + err)
   });
-}, 1000 * 60);
+}, 1000 * 10);
 
 // Listen for any kind of message. There are different kinds of
 // messages.
