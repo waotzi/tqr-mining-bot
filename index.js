@@ -141,11 +141,11 @@ setInterval(() => {
           
         axios.post(walletURL, walletData, walletHeaders).then(res => {
           write_log('rewards.log', 'sending reward')
-          console.log(res.data)
+
           let txId = res.data.result.txId
 
           const data = {
-            id: parseInt(txId),
+            id: txId,
             sender_id: user.id
           }
           axios.post(serverURL + '/transaction', data, headers).then((res) => {
@@ -208,7 +208,6 @@ setInterval(() => {
 setInterval(() => {
   axios.get(serverURL + '/transactions', headers).then(res => {
     res.data.forEach((trx) => {
-      console.log('trx', trx)
       const walletData = {
         "jsonrpc":"2.0",
         "id": 4,

@@ -26,5 +26,5 @@ class User(Base):
 
 class Transactions(Base):
     __tablename__ = "transactions"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String, primary_key=True, index=True)
     sender_id = Column(Integer)

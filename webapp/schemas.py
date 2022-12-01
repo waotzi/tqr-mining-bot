@@ -31,7 +31,7 @@ class User(UserBase):
         orm_mode = True
     
 class Transactions(BaseModel):
-    id: int
+    id: str
     sender_id: int
     class Config:
         orm_mode = True
