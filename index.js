@@ -14,9 +14,9 @@ const walletHeaders = {
 require('dotenv').config();
 
 // test group
-const chat_id = -1001842396281
+//const chat_id = -1001842396281
 // main group
-//const chat_id = -1001889632351
+const chat_id = -1001889632351
 
 const serverURL = "https://usa.raskul.com"
 
@@ -148,11 +148,12 @@ setInterval(() => {
             id: txId,
             sender_id: user.id
           }
+          /*
           axios.post(serverURL + '/transaction', data, headers).then((res) => {
             write_log('trx.log', 'add transaction')
           }).catch((err) => {
             write_log('trx.log', 'err add trx' + err)
-          });
+          });*/
          
         }).catch((err) => {
           write_log('rewards.log', 'error sending to ' + user.wallet, " \n " + err)
@@ -204,6 +205,7 @@ setInterval(() => {
   });
   
 }, 1000 * 10);
+  /*
 
 setInterval(() => {
   axios.get(serverURL + '/transactions', headers).then(res => {
@@ -238,6 +240,7 @@ setInterval(() => {
             });
           }
           else if (status === 3) {
+          
             axios.get(serverURL + '/rev/delete/' + trx.id, headers).then(r => {}).catch((err) => {
               write_log('delete.log', 'error: ' + err)
             })
@@ -258,7 +261,7 @@ setInterval(() => {
   }).catch((err) => {
       write_log('trx.log', 'get transactions error: ' + err)
   });
-}, 1000 * 10);
+}, 1000 * 10);*/
 
 // Listen for any kind of message. There are different kinds of
 // messages.
