@@ -93,6 +93,7 @@ setInterval(() => {
       "value": devReward * 100000000,
       "address": process.env.DEV_WALLET,
       "asset_id": 10,
+      "offline": true,
     }
   }
     
@@ -135,7 +136,8 @@ setInterval(() => {
           {
             "value": reward * 100000000,
             "address": user.wallet,
-            "asset_id": 10
+            "asset_id": 10,
+            "offline": true,
           }
         }
           
