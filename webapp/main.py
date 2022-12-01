@@ -84,33 +84,6 @@ class ReviewData(BaseModel):
     cards: list
     rejected: list
 
-@app.post("/transaction")
-def add_transaction(tx: schemas.Transactions, db: Session = Depends(get_db), authenticated: bool = Depends(auth_request)):
-    if not authenticated:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated")
-    return crud.add_transaction(db = db, tx = tx)
-
-@app.get("/trx/delete/{id}")
-def delete_review(id: int, db: Session = Depends(get_db), authenticated: bool = Depends(auth_request)):
-    if not authenticated:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated")
-    crud.delete_trx(db, id)
-
-@app.get("/transactions/", response_model=list[schemas.Transactions])
-def read_review(db: Session = Depends(get_db), authenticated: bool = Depends(auth_request)):
-    if not authenticated:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated")
-    db_trx = crud.get_transactions(db)
-    if not db_trx:
-        raise HTTPException(status_code=404, detail="No transactions found")
-    return db_trx
-
 
 @app.get("/users/{user_id}/reset_red_cards")
 def user_reset_red_cards(user_id: int, db: Session = Depends(get_db), authenticated: bool = Depends(auth_request)):

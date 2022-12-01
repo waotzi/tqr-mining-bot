@@ -65,7 +65,7 @@ const saveToReview = (msg_id, sender_id, sender_name, date, file_ext, chat_user_
   }
 
   axios.post(serverURL + '/rev/' , data, headers).then(res => {
-    write_log('send_review.log', 'send to review')
+    write_log('send_review.log', 'send to review from ' +sender_id)
   }).catch((err) => {
     write_log('send_review.log', 'error: ' + err)
   });
@@ -143,20 +143,12 @@ setInterval(() => {
           
         axios.post(walletURL, walletData, walletHeaders).then(res => {
           write_log('rewards.log', 'sending reward')
-
-          let txId = res.data.result.txId
-
-          const data = {
-            id: txId,
-            sender_id: user.id
-          }
-          /*
-          axios.post(serverURL + '/transaction', data, headers).then((res) => {
-            write_log('trx.log', 'add transaction')
+          bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment.png')}, {
+            caption: `Sending ${reward} TQR to your wallet.`
           }).catch((err) => {
-            write_log('trx.log', 'err add trx' + err)
-          });*/
-         
+              write_log('rewards.log', 'error sending bot message: ' + err)
+          });
+
         }).catch((err) => {
           bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/addresswrong.png')}, {
             caption: 'Something went wrong when trying to send your reward. Please make sure to use a regular offline address.',
@@ -167,11 +159,7 @@ setInterval(() => {
           write_log('rewards.log', 'error sending to ' + user.wallet, " \n " + err)
         });
 
-        bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment.png')}, {
-          caption: `Sending ${reward} TQR to your wallet.`
-          }).catch((err) => {
-            write_log('rewards.log', 'error sending bot message: ' + err)
-          });
+   
       }).catch((err) => {
         write_log('rewards.log', 'error getting user: ' + err)
       });
@@ -213,63 +201,6 @@ setInterval(() => {
   });
   
 }, 1000 * 10);
-  /*
-
-setInterval(() => {
-  axios.get(serverURL + '/transactions', headers).then(res => {
-    res.data.forEach((trx) => {
-      const walletData = {
-        "jsonrpc":"2.0",
-        "id": 4,
-        "method":"tx_status",
-        "params":
-        {
-          "txId": trx.id,
-          "rates": false
-        }
-      }
-        
-      axios.post(walletURL, walletData, walletHeaders).then(res => {
-        let status = res.data.result.status
-        axios.get(serverURL + '/users/' + trx.sender_id, headers).then(resUser => {
-          let user = resUser.data
-          // pending
-          if (status === 0) {
-          //  console.log('pending')
-          }
-          else if(status === 2) {
-            axios.get(serverURL + '/rev/delete/' + trx.id, headers).then(r => {}).catch((err) => {
-              write_log('delete.log', 'error: ' + err)
-            })
-            bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment_failed.png')}, {
-              caption: 'Payment failed'
-              }).catch((err) => {
-                write_log('trx.log', 'error sending bot message: ' + err)
-            });
-          }
-          else if (status === 3) {
-          
-            axios.get(serverURL + '/rev/delete/' + trx.id, headers).then(r => {}).catch((err) => {
-              write_log('delete.log', 'error: ' + err)
-            })
-            bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment_success.png')}, {
-              caption: 'Payment successful'
-              }).catch((err) => {
-                write_log('trx.log', 'error sending bot message: ' + err)
-            });
-          }
-        }).catch((err) => {
-          write_log('trx.log', 'error get user: ' + err)
-        });
-       
-      }).catch((err) => {
-        write_log('trx.log', 'error: ' + err)
-      });
-    })
-  }).catch((err) => {
-      write_log('trx.log', 'get transactions error: ' + err)
-  });
-}, 1000 * 10);*/
 
 // Listen for any kind of message. There are different kinds of
 // messages.
@@ -403,8 +334,17 @@ bot.on('message', (ctx) => {
         download(url, 'review/' + msg.message_id + '.' + file_ext)
         ctx.getChatMembersCount().then(chat_user_count => {
           saveToReview(msg.message_id, msg.from.id, msg.from.first_name, msg.date, file_ext, chat_user_count)
-        }).catch((err) => {});
-      }).catch((err) => {});
+        }).catch((err) => {
+          write_log('review_file.log', 'eroror getting chat members: ' + err)
+        });
+      }).catch((err) => {
+        write_log('review_file.log', 'error getting file: ' + err)
+
+      });
+    }
+    else {
+      write_log('review_file.log', 'no file_id: ' + msg)
+
     }
   }).catch((err) => {
     if (err.response.data.detail == "User not found") {

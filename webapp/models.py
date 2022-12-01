@@ -22,9 +22,3 @@ class User(Base):
     red_card = Column(Integer)
     wallet = Column(String)
     chat_id = Column(Integer)
-
-
-class Transactions(Base):
-    __tablename__ = "transactions"
-    id = Column(String, primary_key=True, index=True)
-    sender_id = Column(Integer)
