@@ -131,7 +131,7 @@ setInterval(() => {
         else if (rev.chat_user_count > 2000) mult = 100
         else if (rev.chat_user_count > 1000) mult = 10
         
-        let reward = (date.getHours() + date.getMinutes() / 100) * mult;
+        let reward = (Math.round(date.getHours() + date.getMinutes()) / 100) * mult;
         devReward += reward * 0.01
 
         const walletData = {
