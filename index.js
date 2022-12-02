@@ -297,7 +297,7 @@ bot.command('update', (ctx) => {
   }
   else {
     ctx.replyWithPhoto({source: fs.readFileSync('./bot/addresswrong.png')}, {
-      caption: 'Please make sure you have entered a vaild beam offline wallet address.'
+      caption: 'Please make sure you have entered a valid beam offline wallet address.'
     }).catch((err) => {});
   }
 })
