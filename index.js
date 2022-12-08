@@ -16,17 +16,17 @@ const walletHeaders = {
 require('dotenv').config();
 
 // main group
-//const chat_id = -1001889632351
+const chat_id = -1001889632351
 // test group
-const chat_id = -1001842396281
+//const chat_id = -1001842396281
 
 const serverURL = "https://usa.raskul.com"
 
 // replace the value below with the Telegram token you receive from @BotFather
 // main
-//const token = process.env.TOKEN;
+const token = process.env.TOKEN;
 // test
-const token = process.env.TOKEN_TEST;
+// const token = process.env.TOKEN_TEST;
 // server api key
 const secret_api_key = process.env.SECRET_API_KEY
 
