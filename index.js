@@ -3,6 +3,8 @@ const https = require('https');
 const axios = require('axios')
 const fs = require('fs');
 const { Telegraf } = require('telegraf');
+const split = require('emoji-aware').split;
+const onlyEmoji = require('emoji-aware').onlyEmoji;
 
 const walletURL = "http://127.0.0.1:10000/api/wallet"
 const walletHeaders = {
@@ -13,15 +15,19 @@ const walletHeaders = {
 
 require('dotenv').config();
 
-// test group
-//const chat_id = -1001842396281
 // main group
-const chat_id = -1001889632351
+//const chat_id = -1001889632351
+// test group
+const chat_id = -1001842396281
 
 const serverURL = "https://usa.raskul.com"
 
 // replace the value below with the Telegram token you receive from @BotFather
-const token = process.env.TOKEN;
+// main
+//const token = process.env.TOKEN;
+// test
+const token = process.env.TOKEN_TEST;
+// server api key
 const secret_api_key = process.env.SECRET_API_KEY
 
 const headers = {
@@ -117,6 +123,41 @@ setInterval(() => {
   fs.rmSync('log', { recursive: true, force: true });
 }, 1000 * 60 * 60 * 12);
 
+const send_reward = (user, reward) => {
+  devReward += reward * 0.01
+
+  const walletData = {
+    "jsonrpc":"2.0",
+    "id": 2,
+    "method":"tx_send",
+    "params":
+    {
+      "value": reward * 100000000,
+      "address": user.wallet,
+      "asset_id": 10,
+      "offline": true,
+    }
+  }
+  axios.post(walletURL, walletData, walletHeaders).then(res => {
+    write_log('rewards.log', 'sending reward')
+
+    bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment.png')}, {
+      caption: `Sending ${reward} TQR to your wallet.`
+    }).catch((err) => {
+        write_log('rewards.log', 'error sending bot message: ' + err)
+    });
+
+  }).catch((err) => {
+    bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/addresswrong.png')}, {
+      caption: 'Something went wrong when trying to send your reward. Please make sure to use a regular offline address.',
+    }).catch((err) => {
+      write_log('rewards.log', 'error sending bot message about wrong wallet address: ' + err)
+    });
+
+    write_log('rewards.log', 'error sending to ' + user.wallet, " \n " + err)
+  });
+}
+
 setInterval(() => {
   axios.get(serverURL + '/rev/approved', headers).then(res => {
     res.data.forEach((rev) => {
@@ -132,38 +173,7 @@ setInterval(() => {
         else if (rev.chat_user_count > 1000) mult = 10
         
         let reward = (Math.round((date.getHours() + date.getMinutes() / 100) * 100) / 100) * mult;
-        devReward += reward * 0.01
-
-        const walletData = {
-          "jsonrpc":"2.0",
-          "id": 2,
-          "method":"tx_send",
-          "params":
-          {
-            "value": reward * 100000000,
-            "address": user.wallet,
-            "asset_id": 10,
-            "offline": true,
-          }
-        }
-          
-        axios.post(walletURL, walletData, walletHeaders).then(res => {
-          write_log('rewards.log', 'sending reward')
-          bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/payment.png')}, {
-            caption: `Sending ${reward} TQR to your wallet.`
-          }).catch((err) => {
-              write_log('rewards.log', 'error sending bot message: ' + err)
-          });
-
-        }).catch((err) => {
-          bot.telegram.sendPhoto(user.chat_id, {source: fs.readFileSync('./bot/addresswrong.png')}, {
-            caption: 'Something went wrong when trying to send your reward. Please make sure to use a regular offline address.',
-          }).catch((err) => {
-            write_log('rewards.log', 'error sending bot message about wrong wallet address: ' + err)
-          });
-
-          write_log('rewards.log', 'error sending to ' + user.wallet, " \n " + err)
-        });
+        send_reward(user, reward)
 
    
       }).catch((err) => {
@@ -220,7 +230,10 @@ bot.on('callback_query', (ctx) => {
       ctx.deleteMessage().catch((err) => {});
     }, 1000)
   }
-})
+}).catch((err) => {
+  write_log('command_callback_query.log', 'err: ' + err)
+});
+
 
 bot.on('new_chat_members', (ctx) => {
   const msg = ctx.update.message;
@@ -229,11 +242,17 @@ bot.on('new_chat_members', (ctx) => {
   msg.new_chat_members.forEach( (member) => {
     restrictMember(ctx, member)
   })
-})
+}).catch((err) => {
+  write_log('command_new_chat_member.log', 'err: ' + err)
+});
+
 
 bot.help((ctx) => {
   ctx.reply('/update - update your wallet address')
-})
+}).catch((err) => {
+  write_log('command_help.log', 'err: ' + err)
+});
+
 
 const restrictMember = (ctx, member) => {
   ctx.restrictChatMember(member.id, {
@@ -261,7 +280,25 @@ bot.start((ctx) => {
     caption: `Please use /update \[\offline beam adddress\]\ to start receiving rewards and to be able to mine on <a href="https://t.me/tqrtip">TQR Mining Channel</a>`,
     parse_mode: "HTML"
   }).catch((err) => {});
-})
+}).catch((err) => {
+  write_log('command_start.log', 'err: ' + err)
+});
+
+/*
+bot.command('tip', (ctx) => {
+  const msg = ctx.update.message;
+  const user_id = msg.from.id
+  if (!(user_id == 361338016 || user_id == 706665437 || user_id == 5810272694)) return
+  if (!('reply_to_message' in msg)) return
+  let data = msg.text.split('/tip ')
+  let receiver = msg.reply_to_message.from.id
+  let amount = data[1]
+  let token = data[2] || "Beam"
+  console.log(receiver, amount, token)
+}).catch((err) => {
+  write_log('command_tip.log', 'err: ' + err)
+});*/
+
 
 bot.command('update', (ctx) => {
   const msg = ctx.update.message;
@@ -300,12 +337,14 @@ bot.command('update', (ctx) => {
       caption: 'Please make sure you have entered a valid beam offline wallet address.'
     }).catch((err) => {});
   }
-})
+}).catch((err) => {
+  write_log('command_update.log', 'err: ' + err)
+});
+
 
 bot.on('message', (ctx) => {
   const msg = ctx.update.message;
   if (msg.chat.id != chat_id) return
-  console.log(msg)
   axios.get(serverURL + '/users/' + msg.from.id, headers).then(res => {
 
     let file_id = ''
@@ -348,6 +387,34 @@ bot.on('message', (ctx) => {
       });
     }
     else {
+      let date = convertTZ(new Date(), "Pacific/Easter");
+      if(date.getHours() >= 1) return
+
+      let emoji = onlyEmoji(msg.text)
+      if (emoji.length == 1) {
+        only_text = msg.text.split(emoji)
+        if (only_text[1] == " jolly roger") {
+          axios.get(serverURL + '/users/' + msg.from.id, headers).then(resUser => {
+            ctx.getChatMembersCount().then(chat_user_count => {
+              let user = resUser.data
+
+              let mult = 1
+              if (chat_user_count > 3000) mult = 1000
+              else if (chat_user_count > 2000) mult = 100
+              else if (chat_user_count > 1000) mult = 10
+              
+              let reward = 99 * mult;
+              send_reward(user, reward)
+            }).catch((err) => {
+              write_log('jolly.log', 'error getting chat members: ' + err)
+            });
+
+       
+          }).catch((err) => {
+            write_log('jolly.log', 'error getting user: ' + err)
+          });
+        }
+      }
       write_log('review_file.log', 'no file_id' + msg.from)    
     }
   }).catch((err) => {
@@ -363,7 +430,10 @@ bot.on('message', (ctx) => {
   });
   
 
+}).catch((err) => {
+  write_log('command_message.log', 'err: ' + err)
 });
+
 
 
 
