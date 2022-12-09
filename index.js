@@ -15,18 +15,15 @@ const walletHeaders = {
 
 require('dotenv').config();
 
-// main group
-const chat_id = -1001889632351
-// test group
-//const chat_id = -1001842396281
-
-const serverURL = "https://usa.raskul.com"
+const TESTING = false
 
 // replace the value below with the Telegram token you receive from @BotFather
-// main
-const token = process.env.TOKEN;
-// test
-// const token = process.env.TOKEN_TEST;
+const token = TESTING ? process.env.TOKEN_TEST : process.env.TOKEN
+// only work at the selected chat id
+const chat_id = TESTING ? -1001842396281 : -1001889632351
+
+// api server
+const serverURL = "https://usa.raskul.com"
 // server api key
 const secret_api_key = process.env.SECRET_API_KEY
 
@@ -393,7 +390,7 @@ bot.on('message', (ctx) => {
       let emoji = onlyEmoji(msg.text)
       if (emoji.length == 1) {
         only_text = msg.text.split(emoji)
-        if (only_text[1] == " jolly roger") {
+        if (only_text[1] == " jolly roger" || only_text[1] == "jolly roger") {
           axios.get(serverURL + '/users/' + msg.from.id, headers).then(resUser => {
             ctx.getChatMembersCount().then(chat_user_count => {
               let user = resUser.data
